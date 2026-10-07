@@ -1,0 +1,31 @@
+# ── Virtual environment ────────────────────────────────────────────────────
+venv/
+
+# ── Python cache ───────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ── Editor / IDE ───────────────────────────────────────────────────────────
+.idea/
+.vscode/
+
+# ── Environment variables ──────────────────────────────────────────────────
+.env
+.env.*
+
+# ── Generated images (runtime I/O) ────────────────────────────────────────
+input_images/*
+output_images/*
+# Keep the directories themselves tracked
+!input_images/.gitkeep
+!output_images/.gitkeep
+
+# ── Segmentation model weights ─────────────────────────────────────────────
+models/segmentation/*
+!models/segmentation/.gitkeep
+
+# ── OS artefacts ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

@@ -1,0 +1,25 @@
+# Section 1 — initial dependencies only.
+# Segmentation model dependencies (torch, onnxruntime, etc.) will be added in Section 4.
+
+fastapi
+uvicorn[standard]
+opencv-python
+pillow
+numpy
+python-multipart
+
+# Section 4 — AI segmentation dependencies.
+# rembg wraps the pretrained U²-Net model for general foreground/background removal.
+# onnxruntime provides the CPU-based ONNX inference backend required by rembg.
+# No GPU or CUDA packages are required for the prototype.
+rembg==2.0.69
+onnxruntime==1.23.2
+
+# Section 8 — tagging.
+# httpx calls the Gemini REST API (free tier from Google AI Studio).
+# python-dotenv loads GEMINI_API_KEY from a local .env file (optional but handy).
+httpx
+python-dotenv
+
+# Development / testing (not required for production deployment)
+# pytest
