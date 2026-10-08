@@ -1,12 +1,11 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:http/http.dart' as http;
+import '../../../core/network/api_config.dart';
 import 'wardrobe_item.dart';
 
-/// The user's saved wardrobe. Persisted on the device with shared_preferences
-/// so items are still there after the app restarts.
+/// The user's saved wardrobe. Connected to the backend Cloud Database
+/// (SQLAlchemy/SQLite) instead of local device storage.
 ///
 /// Widgets listen to it (ListenableBuilder) and rebuild on add/remove.
 class WardrobeStore extends ChangeNotifier {
@@ -15,58 +14,76 @@ class WardrobeStore extends ChangeNotifier {
   /// App-wide instance. Tests create their own with `WardrobeStore()`.
   static final WardrobeStore instance = WardrobeStore();
 
-  static const String _prefsKey = 'wardrobe_items_v1';
-
   final List<WardrobeItem> _items = [];
 
   /// Newest first.
   List<WardrobeItem> get items => List.unmodifiable(_items);
 
+  String get _itemsUrl => '${ApiConfig.baseUrl}/api/v1/items/';
+
   Future<void> load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_prefsKey);
-      _items.clear();
-      if (raw != null && raw.isNotEmpty) {
-        final decoded = jsonDecode(raw);
+      final response = await http.get(Uri.parse(_itemsUrl));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        _items.clear();
         if (decoded is List) {
           for (final entry in decoded) {
             try {
               _items.add(WardrobeItem.fromJson(entry as Map<String, dynamic>));
             } catch (_) {
-              // skip one corrupt entry instead of losing the whole wardrobe
+              // skip one corrupt entry
             }
           }
+          // Sort to ensure newest items appear first
+          _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         }
+      } else {
+        debugPrint('Failed to load from cloud: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Could not load wardrobe: $e');
+      debugPrint('Could not load wardrobe from cloud: $e');
     }
     notifyListeners();
   }
 
   Future<void> add(WardrobeItem item) async {
-    _items.insert(0, item);
-    notifyListeners();
-    await _save();
+    try {
+      final response = await http.post(
+        Uri.parse(_itemsUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'filename': item.filename,
+          'category': item.category,
+          'subcategory': item.subcategory,
+          'colors': item.colors,
+          'tags': item.tags,
+        }),
+      );
+      if (response.statusCode == 200) {
+        final savedItem = WardrobeItem.fromJson(
+            jsonDecode(response.body) as Map<String, dynamic>);
+        _items.insert(0, savedItem);
+        notifyListeners();
+      } else {
+        debugPrint('Failed to save to cloud: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Could not save wardrobe to cloud: $e');
+    }
   }
 
   Future<void> remove(String id) async {
-    _items.removeWhere((i) => i.id == id);
-    notifyListeners();
-    await _save();
-  }
-
-  Future<void> _save() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _prefsKey,
-        jsonEncode(_items.map((i) => i.toJson()).toList()),
-      );
+      final response = await http.delete(Uri.parse('$_itemsUrl$id'));
+      if (response.statusCode == 200) {
+        _items.removeWhere((i) => i.id == id);
+        notifyListeners();
+      } else {
+        debugPrint('Failed to delete from cloud: ${response.statusCode}');
+      }
     } catch (e) {
-      // Keep the in-memory item; it just won't survive a restart.
-      debugPrint('Could not save wardrobe: $e');
+      debugPrint('Could not delete wardrobe item from cloud: $e');
     }
   }
 }

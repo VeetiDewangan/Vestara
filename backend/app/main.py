@@ -15,6 +15,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as clothing_router
+from app.api.wardrobe_routes import router as wardrobe_router
+from app.database import Base, engine
 from app.config import API_DESCRIPTION, API_TITLE, API_VERSION
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,8 @@ def warm_up_model() -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Initialize the database tables
+    Base.metadata.create_all(bind=engine)
     if os.getenv("WARMUP_MODEL", "0").strip() == "1":
         threading.Thread(target=warm_up_model, name="model-warmup", daemon=True).start()
     yield
@@ -74,6 +78,7 @@ app.add_middleware(
 # Feature routers
 # ---------------------------------------------------------------------------
 app.include_router(clothing_router, prefix="/api/v1/clothing")
+app.include_router(wardrobe_router, prefix="/api/v1/items", tags=["Wardrobe Items"])
 
 
 # ---------------------------------------------------------------------------

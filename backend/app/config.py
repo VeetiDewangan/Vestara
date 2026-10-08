@@ -51,8 +51,8 @@ MODELS_DIR = os.path.join(BASE_DIR, "models", "segmentation")
 MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10 MB
 
 # Minimum accepted image dimensions (pixels)
-MIN_IMAGE_WIDTH: int = 256
-MIN_IMAGE_HEIGHT: int = 256
+MIN_IMAGE_WIDTH: int = 10
+MIN_IMAGE_HEIGHT: int = 10
 
 # Formats validated by magic-byte detection (used by image_utils)
 # Keys are the human-readable format name; values are the leading byte
@@ -82,7 +82,7 @@ MAX_PREPROCESSING_DIMENSION: int = 2048
 # "u2net" is the default general-purpose U²-Net model.
 # Change this here (not in the service) when switching to a
 # clothing-specific model in a later section.
-SEGMENTATION_MODEL_NAME: str = "u2net"
+SEGMENTATION_MODEL_NAME: str = "u2net_cloth_seg"
 
 # ---------------------------------------------------------------------------
 # Mask Analysis  (Section 5)

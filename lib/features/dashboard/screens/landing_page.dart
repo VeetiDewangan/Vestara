@@ -94,7 +94,7 @@ class LandingPage extends StatelessWidget {
 
                 // Greeting & Subtitle
                 const Text(
-                  'Good Morning, Aastha',
+                  'Good Morning!',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
